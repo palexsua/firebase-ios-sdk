@@ -537,13 +537,21 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
 
   SwizzleDynamicLinkNetworkingWithMock();
 
-  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:durabledeepLinkURL];
+  XCTestExpectation *expectation = [self expectationWithDescription:@"completion called"];
+  [self.service
+      dynamicLinkFromUniversalLinkURL:durabledeepLinkURL
+                           completion:^(FIRDynamicLink *_Nullable dynamicLink,
+                                        NSError *_Nullable error) {
+                             XCTAssertNotNil(dynamicLink);
+                             NSString *deepLinkURLString = dynamicLink.url.absoluteString;
 
-  XCTAssertNotNil(dynamicLink);
-  NSString *deepLinkURLString = dynamicLink.url.absoluteString;
+                             XCTAssertEqualObjects(
+                                 @"abcd", deepLinkURLString,
+                                 @"ddl url parameter and deep link url should be the same");
+                             [expectation fulfill];
+                           }];
+  [self waitForExpectationsWithTimeout:kAsyncTestTimout handler:nil];
 
-  XCTAssertEqualObjects(@"abcd", deepLinkURLString,
-                        @"ddl url parameter and deep link url should be the same");
   UnswizzleDynamicLinkNetworking();
 }
 
@@ -554,12 +562,20 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
 
   SwizzleDynamicLinkNetworkingWithMock();
 
-  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:durabledeepLinkURL];
+  XCTestExpectation *expectation = [self expectationWithDescription:@"completion called"];
+  [self.service
+      dynamicLinkFromUniversalLinkURL:durabledeepLinkURL
+                           completion:^(FIRDynamicLink *_Nullable dynamicLink,
+                                        NSError *_Nullable error) {
+                             NSString *deepLinkURLString = dynamicLink.url.absoluteString;
 
-  NSString *deepLinkURLString = dynamicLink.url.absoluteString;
+                             XCTAssertEqualObjects(
+                                 kDecodedComplicatedURLString, deepLinkURLString,
+                                 @"ddl url parameter and deep link url should be the same");
+                             [expectation fulfill];
+                           }];
+  [self waitForExpectationsWithTimeout:kAsyncTestTimout handler:nil];
 
-  XCTAssertEqualObjects(kDecodedComplicatedURLString, deepLinkURLString,
-                        @"ddl url parameter and deep link url should be the same");
   UnswizzleDynamicLinkNetworking();
 }
 
@@ -570,12 +586,20 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
 
   SwizzleDynamicLinkNetworkingWithMock();
 
-  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:durabledeepLinkURL];
+  XCTestExpectation *expectation = [self expectationWithDescription:@"completion called"];
+  [self.service
+      dynamicLinkFromUniversalLinkURL:durabledeepLinkURL
+                           completion:^(FIRDynamicLink *_Nullable dynamicLink,
+                                        NSError *_Nullable error) {
+                             NSString *deepLinkURLString = dynamicLink.url.absoluteString;
 
-  NSString *deepLinkURLString = dynamicLink.url.absoluteString;
+                             XCTAssertEqualObjects(
+                                 kDecodedComplicatedURLString, deepLinkURLString,
+                                 @"ddl url parameter and deep link url should be the same");
+                             [expectation fulfill];
+                           }];
+  [self waitForExpectationsWithTimeout:kAsyncTestTimout handler:nil];
 
-  XCTAssertEqualObjects(kDecodedComplicatedURLString, deepLinkURLString,
-                        @"ddl url parameter and deep link url should be the same");
   UnswizzleDynamicLinkNetworking();
 }
 
@@ -593,10 +617,18 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
 
   SwizzleDynamicLinkNetworkingWithMock();
 
-  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:url];
+  XCTestExpectation *expectation = [self expectationWithDescription:@"completion called"];
+  [self.service
+      dynamicLinkFromUniversalLinkURL:url
+                           completion:^(FIRDynamicLink *_Nullable dynamicLink,
+                                        NSError *_Nullable error) {
+                             XCTAssertEqual(dynamicLink.matchConfidence,
+                                            FIRDynamicLinkMatchConfidenceStrong);
+                             XCTAssertEqualObjects(dynamicLink.url.absoluteString, deepLinkString);
+                             [expectation fulfill];
+                           }];
+  [self waitForExpectationsWithTimeout:kAsyncTestTimout handler:nil];
 
-  XCTAssertEqual(dynamicLink.matchConfidence, FIRDynamicLinkMatchConfidenceStrong);
-  XCTAssertEqualObjects(dynamicLink.url.absoluteString, deepLinkString);
   UnswizzleDynamicLinkNetworking();
 }
 
@@ -615,9 +647,17 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
 
   SwizzleDynamicLinkNetworkingWithMock();
 
-  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:url];
-  XCTAssertEqual(dynamicLink.matchConfidence, FIRDynamicLinkMatchConfidenceStrong);
-  XCTAssertEqualObjects(dynamicLink.url.absoluteString, parsedDeepLinkString);
+  XCTestExpectation *expectation = [self expectationWithDescription:@"completion called"];
+  [self.service dynamicLinkFromUniversalLinkURL:url
+                                     completion:^(FIRDynamicLink *_Nullable dynamicLink,
+                                                  NSError *_Nullable error) {
+                                       XCTAssertEqual(dynamicLink.matchConfidence,
+                                                      FIRDynamicLinkMatchConfidenceStrong);
+                                       XCTAssertEqualObjects(dynamicLink.url.absoluteString,
+                                                             parsedDeepLinkString);
+                                       [expectation fulfill];
+                                     }];
+  [self waitForExpectationsWithTimeout:kAsyncTestTimout handler:nil];
   UnswizzleDynamicLinkNetworking();
 }
 
@@ -637,7 +677,7 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
         NSDictionary *dictionary = @{kFDLResolvedLinkDeepLinkURLKey : kEncodedComplicatedURLString};
         NSData *data = FIRDataWithDictionary(dictionary, nil);
 
-        handler(data, nil);
+        handler(data, nil, nil);
       };
 
   SEL executeRequestSelector = @selector(executeOnePlatformRequest:forURL:completionHandler:);
@@ -679,8 +719,12 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
           kFDLResolvedLinkMinAppVersionKey : expectedMinVersion,
         };
         NSData *data = FIRDataWithDictionary(dictionary, nil);
-
-        handler(data, nil);
+        NSHTTPURLResponse *response =
+            [[NSHTTPURLResponse alloc] initWithURL:[NSURL URLWithString:@"http://domain"]
+                                        statusCode:200
+                                       HTTPVersion:nil
+                                      headerFields:nil];
+        handler(data, response, nil);
       };
 
   SEL executeRequestSelector = @selector(executeOnePlatformRequest:forURL:completionHandler:);
@@ -757,11 +801,17 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
   NSURL *url = FIRDLDeepLinkURLWithInviteID(nil, kEncodedComplicatedURLString, nil, nil, nil, NO,
                                             nil, nil, kURLScheme, nil);
 
-  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:url];
+  XCTestExpectation *expectation = [self expectationWithDescription:@"completion called"];
+  [self.service
+      dynamicLinkFromUniversalLinkURL:url
+                           completion:^(FIRDynamicLink *_Nullable dynamicLink,
+                                        NSError *_Nullable error) {
+                             NSString *minVersion = dynamicLink.minimumAppVersion;
 
-  NSString *minVersion = dynamicLink.minimumAppVersion;
-
-  XCTAssertNil(minVersion, @"Min app version was not nil when not set.");
+                             XCTAssertNil(minVersion, @"Min app version was not nil when not set.");
+                             [expectation fulfill];
+                           }];
+  [self waitForExpectationsWithTimeout:kAsyncTestTimout handler:nil];
 }
 
 - (void)testDynamicLinkFromUniversalLinkURLReturnsDLMinimumVersion {
@@ -778,11 +828,18 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
                              urlScheme:kURLScheme
                           userDefaults:self.userDefaults];
 
-  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:url];
+  XCTestExpectation *expectation = [self expectationWithDescription:@"completion called"];
+  [self.service
+      dynamicLinkFromUniversalLinkURL:url
+                           completion:^(FIRDynamicLink *_Nullable dynamicLink,
+                                        NSError *_Nullable error) {
+                             NSString *minVersion = dynamicLink.minimumAppVersion;
 
-  NSString *minVersion = dynamicLink.minimumAppVersion;
-
-  XCTAssertEqualObjects(expectedMinVersion, minVersion, @"Min version didn't match imv= parameter");
+                             XCTAssertEqualObjects(expectedMinVersion, minVersion,
+                                                   @"Min version didn't match imv= parameter");
+                             [expectation fulfill];
+                           }];
+  [self waitForExpectationsWithTimeout:kAsyncTestTimout handler:nil];
 }
 
 - (void)testUniversalLinkWithSubdomain_DeepLink {
@@ -799,9 +856,18 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
 
   SwizzleDynamicLinkNetworkingWithMock();
 
-  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:url];
-  XCTAssertEqual(dynamicLink.matchConfidence, FIRDynamicLinkMatchConfidenceStrong);
-  XCTAssertEqualObjects(dynamicLink.url.absoluteString, deepLinkString);
+  XCTestExpectation *expectation = [self expectationWithDescription:@"completion called"];
+  [self.service
+      dynamicLinkFromUniversalLinkURL:url
+                           completion:^(FIRDynamicLink *_Nullable dynamicLink,
+                                        NSError *_Nullable error) {
+                             XCTAssertEqual(dynamicLink.matchConfidence,
+                                            FIRDynamicLinkMatchConfidenceStrong);
+                             XCTAssertEqualObjects(dynamicLink.url.absoluteString, deepLinkString);
+                             [expectation fulfill];
+                           }];
+  [self waitForExpectationsWithTimeout:kAsyncTestTimout handler:nil];
+
   UnswizzleDynamicLinkNetworking();
 }
 
@@ -818,9 +884,17 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
                              urlScheme:kURLScheme
                           userDefaults:self.userDefaults];
 
-  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:url];
-  XCTAssertEqual(dynamicLink.matchConfidence, FIRDynamicLinkMatchConfidenceStrong);
-  XCTAssertEqualObjects(dynamicLink.url.absoluteString, parsedDeepLinkString);
+  XCTestExpectation *expectation = [self expectationWithDescription:@"completion called"];
+  [self.service dynamicLinkFromUniversalLinkURL:url
+                                     completion:^(FIRDynamicLink *_Nullable dynamicLink,
+                                                  NSError *_Nullable error) {
+                                       XCTAssertEqual(dynamicLink.matchConfidence,
+                                                      FIRDynamicLinkMatchConfidenceStrong);
+                                       XCTAssertEqualObjects(dynamicLink.url.absoluteString,
+                                                             parsedDeepLinkString);
+                                       [expectation fulfill];
+                                     }];
+  [self waitForExpectationsWithTimeout:kAsyncTestTimout handler:nil];
 }
 
 - (void)testMatchesShortLinkFormat {
