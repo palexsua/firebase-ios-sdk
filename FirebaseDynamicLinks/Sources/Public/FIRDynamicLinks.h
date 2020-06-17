@@ -65,6 +65,21 @@ NS_SWIFT_NAME(DynamicLinks)
     NS_SWIFT_NAME(dynamicLink(fromCustomSchemeURL:));
 
 /**
+ * @method dynamicLinkFromUniversalLinkURL:completion:
+ * @abstract Get a Dynamic Link from a universal link URL. This method parses universal link
+ *     URLs, for instance,
+ *     "https://example.page.link?link=https://www.google.com&ibi=com.google.app&ius=comgoogleapp".
+ *     It is suggested to call it inside your |UIApplicationDelegate|'s
+ *     |application:continueUserActivity:restorationHandler:| method.
+ * @param url Custom scheme URL.
+ * @param completion A block that handles the outcome of attempting to get a Dynamic Link from a
+ * universal link URL.
+ */
+- (void)dynamicLinkFromUniversalLinkURL:(NSURL *)url
+                             completion:(FIRDynamicLinkUniversalLinkHandler)completion
+    NS_SWIFT_NAME(dynamicLink(fromUniversalLink:completion:));
+
+/**
  * @method dynamicLinkFromUniversalLinkURL:
  * @abstract Get a Dynamic Link from a universal link URL. This method parses universal link
  *     URLs, for instance,
@@ -75,7 +90,8 @@ NS_SWIFT_NAME(DynamicLinks)
  * @return Dynamic Link object if the URL is valid and has link parameter, otherwise nil.
  */
 - (nullable FIRDynamicLink *)dynamicLinkFromUniversalLinkURL:(NSURL *)url
-    NS_SWIFT_NAME(dynamicLink(fromUniversalLink:));
+    NS_SWIFT_NAME(dynamicLink(fromUniversalLink:))
+        __attribute__((unavailable("Use dynamicLinkFromUniversalLinkURL:completion: instead.")));
 
 /**
  * @method handleUniversalLink:completion:
