@@ -719,11 +719,10 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
           kFDLResolvedLinkMinAppVersionKey : expectedMinVersion,
         };
         NSData *data = FIRDataWithDictionary(dictionary, nil);
-        NSHTTPURLResponse *response =
-            [[NSHTTPURLResponse alloc] initWithURL:[NSURL URLWithString:@"http://domain"]
-                                        statusCode:200
-                                       HTTPVersion:nil
-                                      headerFields:nil];
+        NSHTTPURLResponse *response = [[NSHTTPURLResponse alloc] initWithURL:url
+                                                                  statusCode:200
+                                                                 HTTPVersion:nil
+                                                                headerFields:nil];
         handler(data, response, nil);
       };
 
@@ -894,6 +893,93 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
                                                              parsedDeepLinkString);
                                        [expectation fulfill];
                                      }];
+  [self waitForExpectationsWithTimeout:kAsyncTestTimout handler:nil];
+}
+
+- (void)testResolveLinkRespectsResponseSuccessStatusCode {
+  [self.service setUpWithLaunchOptions:nil
+                                apiKey:kAPIKey
+                              clientID:kClientID
+                             urlScheme:kURLScheme
+                          userDefaults:self.userDefaults];
+
+  NSString *urlString = @"http://domain";
+  NSURL *url = [NSURL URLWithString:urlString];
+
+  void (^executeRequestBlock)(id, NSDictionary *, NSString *, FIRNetworkRequestCompletionHandler) =
+      ^(id p1, NSDictionary *requestBody, NSString *requestURLString,
+        FIRNetworkRequestCompletionHandler handler) {
+        NSData *data = FIRDataWithDictionary(@{}, nil);
+        NSHTTPURLResponse *response = [[NSHTTPURLResponse alloc] initWithURL:url
+                                                                  statusCode:200
+                                                                 HTTPVersion:nil
+                                                                headerFields:nil];
+        handler(data, response, nil);
+      };
+
+  SEL executeRequestSelector = @selector(executeOnePlatformRequest:forURL:completionHandler:);
+  [GULSwizzler swizzleClass:[FIRDynamicLinkNetworking class]
+                   selector:executeRequestSelector
+            isClassSelector:NO
+                  withBlock:executeRequestBlock];
+
+  XCTestExpectation *expectation = [self expectationWithDescription:@"handler called"];
+
+  [self.service resolveShortLink:url
+                      completion:^(NSURL *_Nullable url, NSError *_Nullable error) {
+                        XCTAssertNotNil(url);
+                        XCTAssertNil(error);
+                        [expectation fulfill];
+                      }];
+
+  [self waitForExpectationsWithTimeout:kAsyncTestTimout handler:nil];
+}
+
+- (void)testResolveLinkRespectsResponseErrorStatusCode {
+  [self.service setUpWithLaunchOptions:nil
+                                apiKey:kAPIKey
+                              clientID:kClientID
+                             urlScheme:kURLScheme
+                          userDefaults:self.userDefaults];
+
+  NSString *urlString = @"http://domain";
+  NSURL *url = [NSURL URLWithString:urlString];
+
+  NSError *expectedError = [NSError
+      errorWithDomain:@"com.firebase.dynamicLinks"
+                 code:0
+             userInfo:@{
+               @"message" : [NSString stringWithFormat:@"Failed to resolve link: %@", urlString]
+             }];
+
+  void (^executeRequestBlock)(id, NSDictionary *, NSString *, FIRNetworkRequestCompletionHandler) =
+      ^(id p1, NSDictionary *requestBody, NSString *requestURLString,
+        FIRNetworkRequestCompletionHandler handler) {
+        NSData *data = FIRDataWithDictionary(@{}, nil);
+        NSHTTPURLResponse *response = [[NSHTTPURLResponse alloc] initWithURL:url
+                                                                  statusCode:400
+                                                                 HTTPVersion:nil
+                                                                headerFields:nil];
+        handler(data, response, nil);
+      };
+
+  SEL executeRequestSelector = @selector(executeOnePlatformRequest:forURL:completionHandler:);
+  [GULSwizzler swizzleClass:[FIRDynamicLinkNetworking class]
+                   selector:executeRequestSelector
+            isClassSelector:NO
+                  withBlock:executeRequestBlock];
+
+  XCTestExpectation *expectation = [self expectationWithDescription:@"handler called"];
+
+  [self.service resolveShortLink:url
+                      completion:^(NSURL *_Nullable url, NSError *_Nullable error) {
+                        XCTAssertNil(url);
+                        XCTAssertNotNil(error);
+                        XCTAssertEqualObjects(error, expectedError,
+                                              @"Handle universal link returned unexpected error");
+                        [expectation fulfill];
+                      }];
+
   [self waitForExpectationsWithTimeout:kAsyncTestTimout handler:nil];
 }
 
