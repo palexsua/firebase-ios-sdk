@@ -80,7 +80,7 @@ NS_SWIFT_NAME(DynamicLinks)
     NS_SWIFT_NAME(dynamicLink(fromUniversalLink:completion:));
 
 /**
- * Unavailable. Use the `dynamicLinkFromUniversalLinkURL:completion:` instead.
+ * @deprecated Use the `dynamicLinkFromUniversalLinkURL:completion:` instead.
  * @method dynamicLinkFromUniversalLinkURL:
  * @abstract Get a Dynamic Link from a universal link URL. This method parses universal link
  *     URLs, for instance,
