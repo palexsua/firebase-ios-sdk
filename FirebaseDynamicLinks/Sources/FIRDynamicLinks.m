@@ -436,7 +436,7 @@ static const NSInteger FIRErrorCodeDurableDeepLinkFailed = -119;
 }
 
 - (BOOL)handleUniversalLink:(NSURL *)universalLinkURL
-            completionBlock:(FIRDynamicLinkUniversalLinkHandler)completion {
+                 completion:(FIRDynamicLinkUniversalLinkHandler)completion {
   if ([self matchesShortLinkFormat:universalLinkURL]) {
     __weak __typeof__(self) weakSelf = self;
     [self resolveShortLink:universalLinkURL
@@ -460,11 +460,6 @@ static const NSInteger FIRErrorCodeDurableDeepLinkFailed = -119;
     }
     return NO;
   }
-}
-
-- (BOOL)handleUniversalLink:(NSURL *)universalLinkURL
-                 completion:(FIRDynamicLinkUniversalLinkHandler)completion {
-  return [self handleUniversalLink:universalLinkURL completionBlock:completion];
 }
 
 - (void)resolveShortLink:(NSURL *)url completion:(FIRDynamicLinkResolverHandler)completion {
