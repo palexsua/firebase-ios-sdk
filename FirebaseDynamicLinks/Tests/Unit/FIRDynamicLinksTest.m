@@ -537,6 +537,23 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
 
   SwizzleDynamicLinkNetworkingWithMock();
 
+  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:durabledeepLinkURL];
+
+  XCTAssertNotNil(dynamicLink);
+  NSString *deepLinkURLString = dynamicLink.url.absoluteString;
+
+  XCTAssertEqualObjects(@"abcd", deepLinkURLString,
+                        @"ddl url parameter and deep link url should be the same");
+  UnswizzleDynamicLinkNetworking();
+}
+
+- (void)testDynamicLinkFromUniversalLinkURLCompletionWithCustomDomainLink {
+  self.service = [[FIRDynamicLinks alloc] init];
+  NSString *durableDeepLinkString = @"https://a.firebase.com/mypath/?link=abcd";
+  NSURL *durabledeepLinkURL = [NSURL URLWithString:durableDeepLinkString];
+
+  SwizzleDynamicLinkNetworkingWithMock();
+
   XCTestExpectation *expectation = [self expectationWithDescription:@"completion called"];
   [self.service
       dynamicLinkFromUniversalLinkURL:durabledeepLinkURL
@@ -562,6 +579,22 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
 
   SwizzleDynamicLinkNetworkingWithMock();
 
+  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:durabledeepLinkURL];
+
+  NSString *deepLinkURLString = dynamicLink.url.absoluteString;
+
+  XCTAssertEqualObjects(kDecodedComplicatedURLString, deepLinkURLString,
+                        @"ddl url parameter and deep link url should be the same");
+  UnswizzleDynamicLinkNetworking();
+}
+
+- (void)testDynamicLinkFromUniversalLinkURLCompletionWithSpecialCharacters {
+  NSString *durableDeepLinkString =
+      [NSString stringWithFormat:@"https://xyz.page.link/?link=%@", kEncodedComplicatedURLString];
+  NSURL *durabledeepLinkURL = [NSURL URLWithString:durableDeepLinkString];
+
+  SwizzleDynamicLinkNetworkingWithMock();
+
   XCTestExpectation *expectation = [self expectationWithDescription:@"completion called"];
   [self.service
       dynamicLinkFromUniversalLinkURL:durabledeepLinkURL
@@ -580,6 +613,22 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
 }
 
 - (void)testDynamicLinkFromUniversalLinkURLWithEncodedCharacters {
+  NSString *durableDeepLinkString =
+      [NSString stringWithFormat:@"https://xyz.page.link/?link=%@", kEncodedComplicatedURLString];
+  NSURL *durabledeepLinkURL = [NSURL URLWithString:durableDeepLinkString];
+
+  SwizzleDynamicLinkNetworkingWithMock();
+
+  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:durabledeepLinkURL];
+
+  NSString *deepLinkURLString = dynamicLink.url.absoluteString;
+
+  XCTAssertEqualObjects(kDecodedComplicatedURLString, deepLinkURLString,
+                        @"ddl url parameter and deep link url should be the same");
+  UnswizzleDynamicLinkNetworking();
+}
+
+- (void)testDynamicLinkFromUniversalLinkURLCompletionWithEncodedCharacters {
   NSString *durableDeepLinkString =
       [NSString stringWithFormat:@"https://xyz.page.link/?link=%@", kEncodedComplicatedURLString];
   NSURL *durabledeepLinkURL = [NSURL URLWithString:durableDeepLinkString];
@@ -617,6 +666,27 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
 
   SwizzleDynamicLinkNetworkingWithMock();
 
+  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:url];
+
+  XCTAssertEqual(dynamicLink.matchConfidence, FIRDynamicLinkMatchConfidenceStrong);
+  XCTAssertEqualObjects(dynamicLink.url.absoluteString, deepLinkString);
+  UnswizzleDynamicLinkNetworking();
+}
+
+- (void)testUniversalLinkWithCompletion_DeepLink {
+  NSString *deepLinkString = @"https://www.google.com/maps/place/Minneapolis";
+  NSString *webPageURLString =
+      [NSString stringWithFormat:kStructuredUniversalLinkFmtDeepLink, deepLinkString];
+  NSURL *url = [NSURL URLWithString:webPageURLString];
+
+  [self.service setUpWithLaunchOptions:nil
+                                apiKey:kAPIKey
+                              clientID:kClientID
+                             urlScheme:kURLScheme
+                          userDefaults:self.userDefaults];
+
+  SwizzleDynamicLinkNetworkingWithMock();
+
   XCTestExpectation *expectation = [self expectationWithDescription:@"completion called"];
   [self.service
       dynamicLinkFromUniversalLinkURL:url
@@ -633,6 +703,27 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
 }
 
 - (void)testUniversalLink_DeepLinkWithParameters {
+  NSString *deepLinkString = @"https://www.google.com?key1%3Dvalue1%26key2%3Dvalue2";
+  NSString *parsedDeepLinkString = @"https://www.google.com?key1=value1&key2=value2";
+  NSString *webPageURLString =
+      [NSString stringWithFormat:kStructuredUniversalLinkFmtDeepLink, deepLinkString];
+  NSURL *url = [NSURL URLWithString:webPageURLString];
+
+  [self.service setUpWithLaunchOptions:nil
+                                apiKey:kAPIKey
+                              clientID:kClientID
+                             urlScheme:kURLScheme
+                          userDefaults:self.userDefaults];
+
+  SwizzleDynamicLinkNetworkingWithMock();
+
+  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:url];
+  XCTAssertEqual(dynamicLink.matchConfidence, FIRDynamicLinkMatchConfidenceStrong);
+  XCTAssertEqualObjects(dynamicLink.url.absoluteString, parsedDeepLinkString);
+  UnswizzleDynamicLinkNetworking();
+}
+
+- (void)testUniversalLinkWithCompletion_DeepLinkWithParameters {
   NSString *deepLinkString = @"https://www.google.com?key1%3Dvalue1%26key2%3Dvalue2";
   NSString *parsedDeepLinkString = @"https://www.google.com?key1=value1&key2=value2";
   NSString *webPageURLString =
@@ -800,6 +891,23 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
   NSURL *url = FIRDLDeepLinkURLWithInviteID(nil, kEncodedComplicatedURLString, nil, nil, nil, NO,
                                             nil, nil, kURLScheme, nil);
 
+  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:url];
+
+  NSString *minVersion = dynamicLink.minimumAppVersion;
+
+  XCTAssertNil(minVersion, @"Min app version was not nil when not set.");
+}
+
+- (void)testDynamicLinkFromUniversalLinkURLCompletionReturnsDLWithNilMinimumVersion {
+  [self.service setUpWithLaunchOptions:nil
+                                apiKey:kAPIKey
+                              clientID:kClientID
+                             urlScheme:kURLScheme
+                          userDefaults:self.userDefaults];
+
+  NSURL *url = FIRDLDeepLinkURLWithInviteID(nil, kEncodedComplicatedURLString, nil, nil, nil, NO,
+                                            nil, nil, kURLScheme, nil);
+
   XCTestExpectation *expectation = [self expectationWithDescription:@"completion called"];
   [self.service
       dynamicLinkFromUniversalLinkURL:url
@@ -814,6 +922,27 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
 }
 
 - (void)testDynamicLinkFromUniversalLinkURLReturnsDLMinimumVersion {
+  NSString *expectedMinVersion = @"03-9g03hfd";
+  NSString *urlSuffix =
+      [NSString stringWithFormat:@"%@&imv=%@", kEncodedComplicatedURLString, expectedMinVersion];
+  NSString *urlString =
+      [NSString stringWithFormat:kStructuredUniversalLinkFmtSubdomainDeepLink, urlSuffix];
+  NSURL *url = [NSURL URLWithString:urlString];
+
+  [self.service setUpWithLaunchOptions:nil
+                                apiKey:kAPIKey
+                              clientID:kClientID
+                             urlScheme:kURLScheme
+                          userDefaults:self.userDefaults];
+
+  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:url];
+
+  NSString *minVersion = dynamicLink.minimumAppVersion;
+
+  XCTAssertEqualObjects(expectedMinVersion, minVersion, @"Min version didn't match imv= parameter");
+}
+
+- (void)testDynamicLinkFromUniversalLinkURLCompletionReturnsDLMinimumVersion {
   NSString *expectedMinVersion = @"03-9g03hfd";
   NSString *urlSuffix =
       [NSString stringWithFormat:@"%@&imv=%@", kEncodedComplicatedURLString, expectedMinVersion];
@@ -855,6 +984,26 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
 
   SwizzleDynamicLinkNetworkingWithMock();
 
+  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:url];
+  XCTAssertEqual(dynamicLink.matchConfidence, FIRDynamicLinkMatchConfidenceStrong);
+  XCTAssertEqualObjects(dynamicLink.url.absoluteString, deepLinkString);
+  UnswizzleDynamicLinkNetworking();
+}
+
+- (void)testUniversalLinkWithCompletionWithSubdomain_DeepLink {
+  NSString *deepLinkString = @"https://www.google.com/maps/place/Minneapolis";
+  NSString *webPageURLString =
+      [NSString stringWithFormat:kStructuredUniversalLinkFmtSubdomainDeepLink, deepLinkString];
+  NSURL *url = [NSURL URLWithString:webPageURLString];
+
+  [self.service setUpWithLaunchOptions:nil
+                                apiKey:kAPIKey
+                              clientID:kClientID
+                             urlScheme:kURLScheme
+                          userDefaults:self.userDefaults];
+
+  SwizzleDynamicLinkNetworkingWithMock();
+
   XCTestExpectation *expectation = [self expectationWithDescription:@"completion called"];
   [self.service
       dynamicLinkFromUniversalLinkURL:url
@@ -871,6 +1020,24 @@ static NSString *const kInfoPlistCustomDomainsKey = @"FirebaseDynamicLinksCustom
 }
 
 - (void)testUniversalLinkWithSubdomain_DeepLinkWithParameters {
+  NSString *deepLinkString = @"https://www.google.com?key1%3Dvalue1%26key2%3Dvalue2";
+  NSString *parsedDeepLinkString = @"https://www.google.com?key1=value1&key2=value2";
+  NSString *webPageURLString =
+      [NSString stringWithFormat:kStructuredUniversalLinkFmtSubdomainDeepLink, deepLinkString];
+  NSURL *url = [NSURL URLWithString:webPageURLString];
+
+  [self.service setUpWithLaunchOptions:nil
+                                apiKey:kAPIKey
+                              clientID:kClientID
+                             urlScheme:kURLScheme
+                          userDefaults:self.userDefaults];
+
+  FIRDynamicLink *dynamicLink = [self.service dynamicLinkFromUniversalLinkURL:url];
+  XCTAssertEqual(dynamicLink.matchConfidence, FIRDynamicLinkMatchConfidenceStrong);
+  XCTAssertEqualObjects(dynamicLink.url.absoluteString, parsedDeepLinkString);
+}
+
+- (void)testUniversalLinkWithCompletionWithSubdomain_DeepLinkWithParameters {
   NSString *deepLinkString = @"https://www.google.com?key1%3Dvalue1%26key2%3Dvalue2";
   NSString *parsedDeepLinkString = @"https://www.google.com?key1=value1&key2=value2";
   NSString *webPageURLString =
